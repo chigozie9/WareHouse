@@ -65,4 +65,31 @@ button:focus-visible {
   button {
     background-color: #f9f9f9;
   }
+
+  
+}
+input,
+button {
+  padding: 0.4rem 0.6rem;
+  border-radius: 0.4rem;
+  border: 1px solid #374151;
+  background-color: #020617;
+  color: white;
+  font-size: 0.9rem;
+}
+
+input:focus {
+  outline: none;
+  border-color: #3b82f6;
+}
+
+button {
+  cursor: pointer;
+  background: linear-gradient(to right, #22c55e, #16a34a);
+  border: none;
+  font-weight: 600;
+}
+
+button:hover {
+  opacity: 0.9;
 }
