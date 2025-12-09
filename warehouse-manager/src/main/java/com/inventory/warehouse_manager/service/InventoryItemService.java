@@ -21,7 +21,10 @@ public class InventoryItemService {
     }
 
     public List<InventoryItem> getItems(Long warehouseId) {
-        return itemRepo.findByWarehouseId(warehouseId);
+        Warehouse warehouse = warehouseRepo.findById(warehouseId)
+                .orElseThrow(() -> new ResourceNotFoundException("Warehouse not found"));
+
+        return itemRepo.findAllByWarehouse(warehouse);
     }
 
     public InventoryItem addItem(Long warehouseId, InventoryItem item) {
@@ -34,7 +37,7 @@ public class InventoryItemService {
         }
 
         // Handle duplicate SKU: merge quantities
-        var existing = itemRepo.findByWarehouseIdAndSku(warehouseId, item.getSku());
+        var existing = itemRepo.findByWarehouseAndSku(warehouse, item.getSku());
         if (existing.isPresent()) {
             InventoryItem ex = existing.get();
             ex.setQuantity(ex.getQuantity() + item.getQuantity());

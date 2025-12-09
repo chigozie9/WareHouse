@@ -30,7 +30,7 @@ public class TransferService {
 
         // find item in source warehouse
         InventoryItem sourceItem = itemRepo
-                .findByWarehouseIdAndSku(source.getId(), request.getSku())
+                .findByWarehouseAndSku(source, request.getSku())
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Item with SKU " + request.getSku() + " not found in source warehouse"));
 
@@ -46,19 +46,17 @@ public class TransferService {
 
         int destAvailable = dest.getMaxCapacity() - dest.getCurrentCapacity();
         if (qty > destAvailable) {
-            throw new IllegalArgumentException("Not enough capacity in destination warehouse. Available: " + destAvailable);
+            throw new IllegalArgumentException(
+                    "Not enough capacity in destination warehouse. Available: " + destAvailable);
         }
 
         // 1) deduct from source
         sourceItem.setQuantity(sourceItem.getQuantity() - qty);
         source.setCurrentCapacity(source.getCurrentCapacity() - qty);
 
-        // if quantity hits 0 you could delete the item, but not required:
-        // if (sourceItem.getQuantity() == 0) itemRepo.delete(sourceItem);
-
         // 2) add to destination (merge if SKU already exists there)
         InventoryItem destItem = itemRepo
-                .findByWarehouseIdAndSku(dest.getId(), request.getSku())
+                .findByWarehouseAndSku(dest, request.getSku())
                 .orElseGet(() -> {
                     InventoryItem newItem = new InventoryItem();
                     newItem.setName(sourceItem.getName());

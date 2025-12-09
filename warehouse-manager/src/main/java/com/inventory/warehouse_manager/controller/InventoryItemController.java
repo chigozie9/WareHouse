@@ -19,19 +19,22 @@ public class InventoryItemController {
     }
 
     @GetMapping
-    public List<InventoryItem> listItems(@PathVariable Long warehouseId) {
+    public List<InventoryItem> listItems(@PathVariable("warehouseId") Long warehouseId) {
         return service.getItems(warehouseId);
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public InventoryItem addItem(@PathVariable Long warehouseId, @Valid @RequestBody InventoryItem item) {
+    public InventoryItem addItem(@PathVariable("warehouseId") Long warehouseId,
+                                 @Valid @RequestBody InventoryItem item) {
         return service.addItem(warehouseId, item);
     }
 
     @DeleteMapping("/{itemId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void deleteItem(@PathVariable Long warehouseId, @PathVariable Long itemId) {
-        service.deleteItem(itemId); // we don't actually need warehouseId here
+    public void deleteItem(@PathVariable("warehouseId") Long warehouseId,
+                           @PathVariable("itemId") Long itemId) {
+        // warehouseId not needed in service, but we bind it correctly here
+        service.deleteItem(itemId);
     }
 }

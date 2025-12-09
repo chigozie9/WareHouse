@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Warehouse Inventory Manager</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="app-header">
+      <h1>Warehouse Inventory Manager</h1>
+      <p class="subtitle">Spring Boot + HTML/CSS/JS</p>
+    </header>
+
+    <div id="errorBanner" class="error-banner hidden"></div>
+
+    <main class="layout">
+      <!-- LEFT: Warehouses + Add form -->
+      <section class="left-panel">
+        <h2>Warehouses</h2>
+        <ul id="warehouseList" class="warehouse-list">
+          <!-- Filled by JS -->
+        </ul>
+
+        <section class="card">
+          <h3>Add Warehouse</h3>
+          <form id="warehouseForm">
+            <label>
+              Name
+              <input type="text" id="whName" required />
+            </label>
+            <label>
+              Location
+              <input type="text" id="whLocation" required />
+            </label>
+            <label>
+              Max Capacity
+              <input type="number" id="whCapacity" min="0" required />
+            </label>
+            <button type="submit">Create Warehouse</button>
+          </form>
+        </section>
+      </section>
+
+      <!-- RIGHT: Items + Add item + Transfer -->
+      <section class="right-panel">
+        <div class="warehouse-header">
+          <h2 id="selectedWarehouseTitle">Select a warehouse</h2>
+          <p id="warehouseMeta" class="muted"></p>
+        </div>
+
+        <section class="card">
+          <h3>Inventory Items</h3>
+          <div id="itemsLoading" class="muted hidden">Loading items...</div>
+          <div id="noItemsMessage" class="muted hidden">No items in this warehouse.</div>
+
+          <table class="items-table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>SKU</th>
+                <th>Category</th>
+                <th>Storage Location</th>
+                <th>Quantity</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="itemsTableBody">
+              <!-- Filled by JS -->
+            </tbody>
+          </table>
+        </section>
+
+        <div class="forms-row">
+          <!-- Add Item -->
+          <section class="card">
+            <h3>Add Item</h3>
+            <form id="itemForm">
+              <label>
+                Name
+                <input type="text" id="itemName" required />
+              </label>
+              <label>
+                SKU
+                <input type="text" id="itemSku" required />
+              </label>
+              <label>
+                Description
+                <input type="text" id="itemDescription" />
+              </label>
+              <label>
+                Category
+                <input type="text" id="itemCategory" />
+              </label>
+              <label>
+                Storage Location
+                <input type="text" id="itemStorage" />
+              </label>
+              <label>
+                Quantity
+                <input type="number" id="itemQuantity" min="0" required />
+              </label>
+              <button type="submit">Add Item</button>
+            </form>
+          </section>
+
+          <!-- Transfer Items -->
+          <section class="card">
+            <h3>Transfer Inventory</h3>
+            <form id="transferForm">
+              <label>
+                Source Warehouse
+                <select id="transferSource" required></select>
+              </label>
+              <label>
+                Destination Warehouse
+                <select id="transferDestination" required></select>
+              </label>
+              <label>
+                SKU
+                <input type="text" id="transferSku" required />
+              </label>
+              <label>
+                Quantity
+                <input type="number" id="transferQuantity" min="1" required />
+              </label>
+              <button type="submit">Transfer</button>
+            </form>
+            <p class="muted small">
+              Tip: source will usually be the selected warehouse.
+            </p>
+          </section>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

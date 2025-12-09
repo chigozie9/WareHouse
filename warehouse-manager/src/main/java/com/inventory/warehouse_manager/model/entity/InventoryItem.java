@@ -1,5 +1,6 @@
 package com.inventory.warehouse_manager.model.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
@@ -37,5 +38,6 @@ public class InventoryItem {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "warehouse_id", nullable = false)
+    @JsonIgnore
     private Warehouse warehouse;
 }
