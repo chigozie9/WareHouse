@@ -9,7 +9,7 @@
   <div class="app">
     <header class="app-header">
       <h1>Warehouse Inventory Manager</h1>
-      <p class="subtitle">Spring Boot + HTML/CSS/JS</p>
+      <p class="subtitle">Admin</p>
     </header>
 
     <div id="errorBanner" class="error-banner hidden"></div>
@@ -51,8 +51,19 @@
 
         <section class="card">
           <h3>Inventory Items</h3>
+
+          <!-- Search box -->
+          <label>
+            <span class="small muted">Search items</span>
+            <input
+              type="text"
+              id="itemSearch"
+              placeholder="Search by name, SKU, category, or location"
+            />
+          </label>
+
           <div id="itemsLoading" class="muted hidden">Loading items...</div>
-          <div id="noItemsMessage" class="muted hidden">No items in this warehouse.</div>
+          <div id="noItemsMessage" class="muted hidden">No items to display.</div>
 
           <table class="items-table">
             <thead>

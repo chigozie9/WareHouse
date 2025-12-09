@@ -21,6 +21,9 @@ const transferForm = document.getElementById("transferForm");
 const transferSourceSelect = document.getElementById("transferSource");
 const transferDestinationSelect = document.getElementById("transferDestination");
 
+// Search input
+const itemSearchInput = document.getElementById("itemSearch");
+
 // ---------- Helper: error banner ----------
 function showError(msg) {
   if (!msg) {
@@ -44,7 +47,6 @@ async function loadWarehouses() {
     updateTransferWarehouseOptions();
 
     if (warehouses.length > 0) {
-      // Select first warehouse by default / keep selection if still present
       if (!selectedWarehouse) {
         selectWarehouse(warehouses[0].id);
       } else {
@@ -107,7 +109,6 @@ function updateTransferWarehouseOptions() {
     });
   });
 
-  // Preselect the currently selected warehouse as source
   if (selectedWarehouse) {
     transferSourceSelect.value = String(selectedWarehouse.id);
   }
@@ -124,7 +125,6 @@ async function selectWarehouse(id) {
   selectedTitleEl.textContent = `${wh.name} — Inventory`;
   warehouseMetaEl.textContent = `Location: ${wh.location} · Capacity: ${wh.currentCapacity}/${wh.maxCapacity}`;
 
-  // make sure dropdowns know about selection
   updateTransferWarehouseOptions();
 
   await loadItemsForWarehouse(wh.id);
@@ -152,13 +152,34 @@ async function loadItemsForWarehouse(warehouseId) {
 function renderItems() {
   itemsTableBody.innerHTML = "";
 
-  if (!items || items.length === 0) {
+  const query = itemSearchInput
+    ? itemSearchInput.value.trim().toLowerCase()
+    : "";
+
+  let visible = items || [];
+
+  if (query) {
+    visible = visible.filter((item) => {
+      const name = (item.name || "").toLowerCase();
+      const sku = (item.sku || "").toLowerCase();
+      const category = (item.category || "").toLowerCase();
+      const location = (item.storageLocation || "").toLowerCase();
+      return (
+        name.includes(query) ||
+        sku.includes(query) ||
+        category.includes(query) ||
+        location.includes(query)
+      );
+    });
+  }
+
+  if (!visible || visible.length === 0) {
     noItemsMessageEl.classList.remove("hidden");
     return;
   }
   noItemsMessageEl.classList.add("hidden");
 
-  items.forEach((item) => {
+  visible.forEach((item) => {
     const tr = document.createElement("tr");
     tr.innerHTML = `
       <td>${item.name}</td>
@@ -200,7 +221,7 @@ async function handleDeleteItem(itemId) {
     }
 
     await loadItemsForWarehouse(selectedWarehouse.id);
-    await loadWarehouses(); // refresh capacities + dropdowns
+    await loadWarehouses();
   } catch (err) {
     showError(err.message);
   }
@@ -276,7 +297,7 @@ itemForm.addEventListener("submit", async (e) => {
 
     itemForm.reset();
     await loadItemsForWarehouse(selectedWarehouse.id);
-    await loadWarehouses(); // refresh capacities + dropdowns
+    await loadWarehouses();
   } catch (err) {
     showError(err.message);
   }
@@ -313,7 +334,6 @@ transferForm.addEventListener("submit", async (e) => {
     }
 
     transferForm.reset();
-    // Refresh list + items for selected warehouse
     await loadWarehouses();
     if (selectedWarehouse) {
       await loadItemsForWarehouse(selectedWarehouse.id);
@@ -323,6 +343,13 @@ transferForm.addEventListener("submit", async (e) => {
     showError(err.message);
   }
 });
+
+// ---------- Search: re-render on input ----------
+if (itemSearchInput) {
+  itemSearchInput.addEventListener("input", () => {
+    renderItems();
+  });
+}
 
 // ---------- Init ----------
 document.addEventListener("DOMContentLoaded", () => {
