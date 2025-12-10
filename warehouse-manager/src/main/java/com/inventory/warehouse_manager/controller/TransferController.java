@@ -6,6 +6,8 @@ import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
+
 @RestController
 @RequestMapping("/api/transfers")
 public class TransferController {
@@ -18,8 +20,8 @@ public class TransferController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.OK)
-    public String transfer(@Valid @RequestBody TransferRequest request) {
+    public Map<String, String> transfer(@Valid @RequestBody TransferRequest request) {
         transferService.transfer(request);
-        return "Transfer completed successfully.";
+        return Map.of("message", "Transfer completed successfully.");
     }
 }

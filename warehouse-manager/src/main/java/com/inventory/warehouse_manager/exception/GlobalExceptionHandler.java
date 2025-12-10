@@ -26,10 +26,18 @@ public class GlobalExceptionHandler {
         return Map.of("error", ex.getMessage());
     }
 
-    // Optional: catch-all fallback so we don't leak stack traces
+    // e.g. "Cannot delete warehouse that has items assigned."
+    @ExceptionHandler(IllegalStateException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public Map<String, String> handleIllegalState(IllegalStateException ex) {
+        return Map.of("error", ex.getMessage());
+    }
+
+    // Catch-all fallback so we don't leak stack traces / ugly messages
     @ExceptionHandler(Exception.class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public Map<String, String> handleGeneric(Exception ex) {
-        return Map.of("error", "Unexpected server error: " + ex.getMessage());
+        // In a real app you would log ex here
+        return Map.of("error", "Unexpected server error. Please try again.");
     }
 }

@@ -1,3 +1,4 @@
+/* ---------- Reset ---------- */
 *,
 *::before,
 *::after {
@@ -26,14 +27,45 @@ body {
   margin-top: 0.25rem;
 }
 
-.layout {
+/* ---------- Error banner ---------- */
+
+.error-banner {
+  margin-top: 1rem;
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  background-color: #f97373;
+  color: #111827;
+  max-width: 700px;
+}
+
+.hidden {
+  display: none;
+}
+
+/* ---------- Top row (forms) ---------- */
+
+.forms-row-top {
+  display: flex;
+  gap: 1rem;
+  margin-top: 2rem;
+  flex-wrap: wrap;
+}
+
+.form-card {
+  flex: 1;
+  min-width: 260px;
+}
+
+/* ---------- Bottom row ---------- */
+
+.layout-bottom {
   display: flex;
   gap: 2rem;
   margin-top: 2rem;
 }
 
 .left-panel {
-  flex: 0 0 340px;
+  flex: 0 0 320px;
 }
 
 .right-panel {
@@ -41,12 +73,13 @@ body {
   min-width: 0;
 }
 
+/* ---------- Cards ---------- */
+
 .card {
   background-color: #020617;
   border: 1px solid #111827;
   border-radius: 0.75rem;
   padding: 1rem;
-  margin-top: 1rem;
   box-shadow: 0 16px 40px rgba(15, 23, 42, 0.8);
 }
 
@@ -54,36 +87,61 @@ body {
   margin-top: 0;
 }
 
+/* ---------- Text helpers ---------- */
+
+.muted {
+  color: #9ca3af;
+}
+
+.small {
+  font-size: 0.8rem;
+}
+
+/* ---------- Forms & controls ---------- */
+
 label {
   display: block;
   font-size: 0.85rem;
   margin-bottom: 0.35rem;
 }
 
-/* Inputs, selects, and buttons share the same base style */
 input,
 select,
+textarea,
 button {
+  font-family: inherit;
+  font-size: 0.9rem;
+}
+
+input,
+select,
+textarea {
   width: 100%;
   padding: 0.4rem 0.6rem;
   border-radius: 0.4rem;
   border: 1px solid #374151;
   background-color: #020617;
   color: #f9fafb;
-  font-size: 0.9rem;
 }
 
 input:focus,
-select:focus {
+select:focus,
+textarea:focus {
   outline: none;
   border-color: #3b82f6;
 }
 
+/* Primary buttons (form submits) */
+
 button {
+  width: 100%;
+  padding: 0.5rem 0.8rem;
+  border-radius: 0.4rem;
+  border: none;
   margin-top: 0.5rem;
   cursor: pointer;
   background: linear-gradient(to right, #22c55e, #16a34a);
-  border: none;
+  color: #f9fafb;
   font-weight: 600;
 }
 
@@ -91,19 +149,29 @@ button:hover {
   opacity: 0.9;
 }
 
-/* Make the Delete button in the table smaller, not full-width */
-.items-table .btn-delete-item {
+/* Small inline buttons (Edit/Delete) */
+
+.btn-small {
   width: auto;
-  padding: 0.25rem 0.75rem;
+  padding: 0.25rem 0.8rem;
   font-size: 0.8rem;
+  margin-top: 0;
 }
 
-/* Optional: keep its green style but subtle */
-.items-table .btn-delete-item {
-  background: linear-gradient(to right, #ef4444, #b91c1c);
+/* Delete buttons: red */
+
+.btn-danger {
+  background: #ef4444;
 }
 
-/* Warehouse list styles */
+/* Secondary / neutral small button (Edit) */
+
+.btn-secondary {
+  background: #111827;
+}
+
+/* ---------- Warehouse list ---------- */
+
 .warehouse-list {
   list-style: none;
   padding-left: 0;
@@ -121,28 +189,6 @@ button:hover {
   gap: 0.5rem;
 }
 
-.warehouse-label {
-  flex: 1;
-}
-
-/* small red delete button for warehouses */
-.btn-delete-warehouse {
-  width: auto;
-  padding: 0.2rem 0.6rem;
-  font-size: 0.75rem;
-  background: linear-gradient(to right, #ef4444, #b91c1c);
-  border: none;
-  color: #f9fafb;
-  border-radius: 0.35rem;
-  cursor: pointer;
-}
-
-.btn-delete-warehouse:hover {
-  opacity: 0.9;
-}
-
-
-
 .warehouse-item:hover {
   background-color: #0b1120;
 }
@@ -151,17 +197,24 @@ button:hover {
   background-color: #1e293b;
 }
 
+.warehouse-item-main {
+  display: flex;
+  flex-direction: column;
+  font-size: 0.86rem;
+}
+
+.warehouse-item-actions {
+  display: flex;
+  gap: 0.4rem;
+}
+
+/* ---------- Warehouse header ---------- */
+
 .warehouse-header h2 {
   margin: 0;
 }
 
-.muted {
-  color: #9ca3af;
-}
-
-.small {
-  font-size: 0.8rem;
-}
+/* ---------- Items table ---------- */
 
 .items-table {
   width: 100%;
@@ -181,22 +234,13 @@ button:hover {
   background-color: #020617;
 }
 
-.forms-row {
+.table-actions {
   display: flex;
-  gap: 1rem;
-  flex-wrap: wrap;
-  margin-top: 1rem;
+  justify-content: flex-end;
+  gap: 0.4rem;
 }
-
-.error-banner {
-  margin-top: 1rem;
-  padding: 0.75rem 1rem;
-  border-radius: 0.5rem;
-  background-color: #f97373;
-  color: #111827;
-  max-width: 600px;
-}
-
-.hidden {
-  display: none;
+.table-actions {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-start;   /* or just remove this line */
 }

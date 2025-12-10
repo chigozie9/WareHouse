@@ -6,6 +6,7 @@ import com.inventory.warehouse_manager.model.entity.Warehouse;
 import com.inventory.warehouse_manager.repository.InventoryItemRepository;
 import com.inventory.warehouse_manager.repository.WarehouseRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -21,45 +22,131 @@ public class InventoryItemService {
         this.warehouseRepo = warehouseRepo;
     }
 
+    // ---------------------------------------------------------------------
+    // Read
+    // ---------------------------------------------------------------------
     public List<InventoryItem> getItems(Long warehouseId) {
         return itemRepo.findByWarehouseId(warehouseId);
     }
 
+    // ---------------------------------------------------------------------
+    // Create (Add Item)
+    // ---------------------------------------------------------------------
+    @Transactional
     public InventoryItem addItem(Long warehouseId, InventoryItem item) {
         Warehouse warehouse = warehouseRepo.findById(warehouseId)
-                .orElseThrow(() -> new ResourceNotFoundException("Warehouse not found"));
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Warehouse not found with id " + warehouseId));
+
+        int qty = item.getQuantity() != null ? item.getQuantity() : 0;
+        if (qty <= 0) {
+            throw new IllegalArgumentException("Quantity must be greater than 0.");
+        }
 
         int available = warehouse.getMaxCapacity() - warehouse.getCurrentCapacity();
-        if (item.getQuantity() > available) {
-            throw new IllegalArgumentException("Not enough capacity. Available: " + available);
+        if (qty > available) {
+            throw new IllegalArgumentException(
+                    "Not enough capacity. Available: " + available);
         }
 
-        // Handle duplicate SKU: merge quantities
-        var existing = itemRepo.findByWarehouseIdAndSku(warehouse.getId(), item.getSku());
-        if (existing.isPresent()) {
-            InventoryItem ex = existing.get();
-            ex.setQuantity(ex.getQuantity() + item.getQuantity());
-            warehouse.setCurrentCapacity(warehouse.getCurrentCapacity() + item.getQuantity());
-            warehouseRepo.save(warehouse);
-            return itemRepo.save(ex);
+        // Check for duplicate SKU and merge quantities if present
+        InventoryItem savedItem = itemRepo.findByWarehouseIdAndSku(warehouseId, item.getSku())
+                .map(existing -> {
+                    existing.setName(item.getName());
+                    existing.setDescription(item.getDescription());
+                    existing.setCategory(item.getCategory());
+                    existing.setStorageLocation(item.getStorageLocation());
+                    existing.setQuantity(existing.getQuantity() + qty);
+                    return existing;
+                })
+                .orElseGet(() -> {
+                    item.setWarehouse(warehouse);
+                    return item;
+                });
+
+        warehouse.setCurrentCapacity(warehouse.getCurrentCapacity() + qty);
+        warehouseRepo.save(warehouse);
+
+        return itemRepo.save(savedItem);
+    }
+
+    // ---------------------------------------------------------------------
+    // Update
+    // ---------------------------------------------------------------------
+    @Transactional
+    public InventoryItem updateItem(Long warehouseId,
+                                    Long itemId,
+                                    InventoryItem updated) {
+
+        Warehouse warehouse = warehouseRepo.findById(warehouseId)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Warehouse not found with id " + warehouseId));
+
+        InventoryItem item = itemRepo.findById(itemId)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Item not found with id " + itemId));
+
+        // Safety check: ensure item belongs to the given warehouse
+        if (!item.getWarehouse().getId().equals(warehouseId)) {
+            throw new IllegalArgumentException(
+                    "Item does not belong to warehouse " + warehouseId);
         }
 
-        // New item in this warehouse
-        item.setWarehouse(warehouse);
-        warehouse.setCurrentCapacity(warehouse.getCurrentCapacity() + item.getQuantity());
+        int oldQty = item.getQuantity() != null ? item.getQuantity() : 0;
+        int newQty = updated.getQuantity() != null ? updated.getQuantity() : 0;
+
+        if (newQty <= 0) {
+            throw new IllegalArgumentException("Quantity must be greater than 0.");
+        }
+
+        int diff = newQty - oldQty;
+        if (diff > 0) {
+            int available = warehouse.getMaxCapacity() - warehouse.getCurrentCapacity();
+            if (diff > available) {
+                throw new IllegalArgumentException(
+                        "Not enough capacity. Available: " + available);
+            }
+        }
+
+        // Update fields
+        item.setName(updated.getName());
+        item.setSku(updated.getSku());
+        item.setDescription(updated.getDescription());
+        item.setCategory(updated.getCategory());
+        item.setStorageLocation(updated.getStorageLocation());
+        item.setQuantity(newQty);
+
+        // Adjust warehouse capacity
+        warehouse.setCurrentCapacity(warehouse.getCurrentCapacity() + diff);
         warehouseRepo.save(warehouse);
 
         return itemRepo.save(item);
     }
 
-    public void deleteItem(Long id) {
-        InventoryItem item = itemRepo.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Item not found"));
+    // ---------------------------------------------------------------------
+    // Delete
+    // ---------------------------------------------------------------------
+    @Transactional
+    public void deleteItem(Long warehouseId, Long itemId) {
+        Warehouse warehouse = warehouseRepo.findById(warehouseId)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Warehouse not found with id " + warehouseId));
 
-        Warehouse w = item.getWarehouse();
-        w.setCurrentCapacity(w.getCurrentCapacity() - item.getQuantity());
+        InventoryItem item = itemRepo.findById(itemId)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Item not found with id " + itemId));
+
+        // Ensure item really belongs to this warehouse
+        if (!item.getWarehouse().getId().equals(warehouseId)) {
+            throw new IllegalArgumentException(
+                    "Item does not belong to warehouse " + warehouseId);
+        }
+
+        int qty = item.getQuantity() != null ? item.getQuantity() : 0;
+
+        warehouse.setCurrentCapacity(warehouse.getCurrentCapacity() - qty);
+        warehouseRepo.save(warehouse);
 
         itemRepo.delete(item);
-        warehouseRepo.save(w);
     }
 }

@@ -12,18 +12,35 @@
       <p class="subtitle">Admin</p>
     </header>
 
-    <div id="errorBanner" class="error-banner hidden"></div>
+    <main>
+      <!-- DASHBOARD ROW -->
+      <section class="dashboard-row">
+        <section class="card dashboard-card">
+          <h2>Dashboard Overview</h2>
+          <p id="dashboardTotal" class="muted"></p>
 
-    <main class="layout">
-      <!-- LEFT: Warehouses + Add form -->
-      <section class="left-panel">
-        <h2>Warehouses</h2>
-        <ul id="warehouseList" class="warehouse-list">
-          <!-- Filled by JS -->
-        </ul>
+          <h4>Capacity Summary</h4>
+          <ul id="dashboardList" class="dashboard-list">
+            <!-- filled by JS -->
+          </ul>
 
-        <section class="card">
-          <h3>Add Warehouse</h3>
+          <h4>Alerts</h4>
+          <ul id="alertsList" class="alerts-list">
+            <!-- filled by JS -->
+          </ul>
+
+          <h4>Recent Activity</h4>
+          <ul id="recentActivityList" class="recent-activity-list">
+            <!-- filled by JS -->
+          </ul>
+        </section>
+      </section>
+
+      <!-- TOP ROW: forms -->
+      <section class="forms-row-top">
+        <!-- Add / Edit Warehouse -->
+        <section class="card form-card">
+          <h3 id="warehouseFormTitle">Add Warehouse</h3>
           <form id="warehouseForm">
             <label>
               Name
@@ -37,111 +54,123 @@
               Max Capacity
               <input type="number" id="whCapacity" min="0" required />
             </label>
-            <button type="submit">Create Warehouse</button>
+            <button type="submit" id="warehouseSubmitBtn">Create Warehouse</button>
           </form>
+        </section>
+
+        <!-- Add / Edit Item -->
+        <section class="card form-card">
+          <h3 id="itemFormTitle">Add Item</h3>
+          <form id="itemForm">
+            <label>
+              Name
+              <input type="text" id="itemName" required />
+            </label>
+            <label>
+              SKU
+              <input type="text" id="itemSku" required />
+            </label>
+            <label>
+              Description
+              <input type="text" id="itemDescription" />
+            </label>
+            <label>
+              Category
+              <input type="text" id="itemCategory" />
+            </label>
+            <label>
+              Storage Location
+              <input type="text" id="itemStorage" />
+            </label>
+            <label>
+              Quantity
+              <input type="number" id="itemQuantity" min="0" required />
+            </label>
+            <button type="submit" id="itemSubmitBtn">Add Item</button>
+          </form>
+        </section>
+
+        <!-- Transfer Inventory -->
+        <section class="card form-card">
+          <h3>Transfer Inventory</h3>
+          <form id="transferForm">
+            <label>
+              Source Warehouse
+              <select id="transferSource" required></select>
+            </label>
+            <label>
+              Destination Warehouse
+              <select id="transferDestination" required></select>
+            </label>
+            <label>
+              SKU
+              <input type="text" id="transferSku" required />
+            </label>
+            <label>
+              Quantity
+              <input type="number" id="transferQuantity" min="1" required />
+            </label>
+            <button type="submit">Transfer</button>
+          </form>
+          <p class="muted small">
+            Tip: source will usually be the selected warehouse.
+          </p>
         </section>
       </section>
 
-      <!-- RIGHT: Items + Add item + Transfer -->
-      <section class="right-panel">
-        <div class="warehouse-header">
-          <h2 id="selectedWarehouseTitle">Select a warehouse</h2>
-          <p id="warehouseMeta" class="muted"></p>
-        </div>
+      <!-- ERROR BANNER-->
+      <div id="errorBanner" class="error-banner hidden"></div>
 
-        <section class="card">
-          <h3>Inventory Items</h3>
-
-          <!-- Search box -->
-          <label>
-            <span class="small muted">Search items</span>
-            <input
-              type="text"
-              id="itemSearch"
-              placeholder="Search by name, SKU, category, or location"
-            />
-          </label>
-
-          <div id="itemsLoading" class="muted hidden">Loading items...</div>
-          <div id="noItemsMessage" class="muted hidden">No items to display.</div>
-
-          <table class="items-table">
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>SKU</th>
-                <th>Category</th>
-                <th>Storage Location</th>
-                <th>Quantity</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody id="itemsTableBody">
-              <!-- Filled by JS -->
-            </tbody>
-          </table>
+      <!-- BOTTOM ROW: warehouses + inventory -->
+      <section class="layout-bottom">
+        <!-- LEFT: Warehouse list -->
+        <section class="left-panel">
+          <h2>Warehouses</h2>
+          <ul id="warehouseList" class="warehouse-list">
+            <!-- filled by JS -->
+          </ul>
         </section>
 
-        <div class="forms-row">
-          <!-- Add Item -->
-          <section class="card">
-            <h3>Add Item</h3>
-            <form id="itemForm">
-              <label>
-                Name
-                <input type="text" id="itemName" required />
-              </label>
-              <label>
-                SKU
-                <input type="text" id="itemSku" required />
-              </label>
-              <label>
-                Description
-                <input type="text" id="itemDescription" />
-              </label>
-              <label>
-                Category
-                <input type="text" id="itemCategory" />
-              </label>
-              <label>
-                Storage Location
-                <input type="text" id="itemStorage" />
-              </label>
-              <label>
-                Quantity
-                <input type="number" id="itemQuantity" min="0" required />
-              </label>
-              <button type="submit">Add Item</button>
-            </form>
-          </section>
+        <!-- RIGHT: Inventory for selected warehouse -->
+        <section class="right-panel">
+          <div class="warehouse-header">
+            <h2 id="selectedWarehouseTitle">Select a warehouse</h2>
+            <p id="warehouseMeta" class="muted"></p>
+          </div>
 
-          <!-- Transfer Items -->
           <section class="card">
-            <h3>Transfer Inventory</h3>
-            <form id="transferForm">
-              <label>
-                Source Warehouse
-                <select id="transferSource" required></select>
-              </label>
-              <label>
-                Destination Warehouse
-                <select id="transferDestination" required></select>
-              </label>
-              <label>
-                SKU
-                <input type="text" id="transferSku" required />
-              </label>
-              <label>
-                Quantity
-                <input type="number" id="transferQuantity" min="1" required />
-              </label>
-              <button type="submit">Transfer</button>
-            </form>
-            <p class="muted small">
-              Tip: source will usually be the selected warehouse.
-            </p>
+            <h3>Inventory Items</h3>
+
+            <!-- Search box -->
+            <label>
+              <span class="small muted">Search items</span>
+              <input
+                type="text"
+                id="itemSearch"
+                placeholder="Search by name, SKU, category, or location"
+              />
+            </label>
+
+            <div id="itemsLoading" class="muted hidden">Loading items...</div>
+            <div id="noItemsMessage" class="muted hidden">No items to display.</div>
+
+            <table class="items-table">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>SKU</th>
+                  <th>Category</th>
+                  <th>Storage Location</th>
+                  <th>Quantity</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="itemsTableBody">
+                <!-- filled by JS -->
+              </tbody>
+            </table>
           </section>
-        </div>
+        </section>
       </section>
     </main>
   </div>
