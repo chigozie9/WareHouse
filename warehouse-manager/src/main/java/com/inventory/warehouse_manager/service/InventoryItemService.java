@@ -15,16 +15,14 @@ public class InventoryItemService {
     private final InventoryItemRepository itemRepo;
     private final WarehouseRepository warehouseRepo;
 
-    public InventoryItemService(InventoryItemRepository itemRepo, WarehouseRepository warehouseRepo) {
+    public InventoryItemService(InventoryItemRepository itemRepo,
+                                WarehouseRepository warehouseRepo) {
         this.itemRepo = itemRepo;
         this.warehouseRepo = warehouseRepo;
     }
 
     public List<InventoryItem> getItems(Long warehouseId) {
-        Warehouse warehouse = warehouseRepo.findById(warehouseId)
-                .orElseThrow(() -> new ResourceNotFoundException("Warehouse not found"));
-
-        return itemRepo.findAllByWarehouse(warehouse);
+        return itemRepo.findByWarehouseId(warehouseId);
     }
 
     public InventoryItem addItem(Long warehouseId, InventoryItem item) {
@@ -37,7 +35,7 @@ public class InventoryItemService {
         }
 
         // Handle duplicate SKU: merge quantities
-        var existing = itemRepo.findByWarehouseAndSku(warehouse, item.getSku());
+        var existing = itemRepo.findByWarehouseIdAndSku(warehouse.getId(), item.getSku());
         if (existing.isPresent()) {
             InventoryItem ex = existing.get();
             ex.setQuantity(ex.getQuantity() + item.getQuantity());
@@ -46,6 +44,7 @@ public class InventoryItemService {
             return itemRepo.save(ex);
         }
 
+        // New item in this warehouse
         item.setWarehouse(warehouse);
         warehouse.setCurrentCapacity(warehouse.getCurrentCapacity() + item.getQuantity());
         warehouseRepo.save(warehouse);

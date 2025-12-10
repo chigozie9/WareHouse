@@ -1,7 +1,6 @@
 package com.inventory.warehouse_manager.repository;
 
 import com.inventory.warehouse_manager.model.entity.InventoryItem;
-import com.inventory.warehouse_manager.model.entity.Warehouse;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
@@ -9,9 +8,12 @@ import java.util.Optional;
 
 public interface InventoryItemRepository extends JpaRepository<InventoryItem, Long> {
 
-    // All items that belong to a given Warehouse
-    List<InventoryItem> findAllByWarehouse(Warehouse warehouse);
+    // List all items for a warehouse
+    List<InventoryItem> findByWarehouseId(Long warehouseId);
 
-    // One item in a specific warehouse by SKU
-    Optional<InventoryItem> findByWarehouseAndSku(Warehouse warehouse, String sku);
+    // Find a specific item in a warehouse by SKU
+    Optional<InventoryItem> findByWarehouseIdAndSku(Long warehouseId, String sku);
+
+    // Check if a warehouse still has any items (used before deleting warehouse)
+    boolean existsByWarehouseId(Long warehouseId);
 }

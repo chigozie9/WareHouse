@@ -30,7 +30,7 @@ public class TransferService {
 
         // find item in source warehouse
         InventoryItem sourceItem = itemRepo
-                .findByWarehouseAndSku(source, request.getSku())
+                .findByWarehouseIdAndSku(source.getId(), request.getSku())
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Item with SKU " + request.getSku() + " not found in source warehouse"));
 
@@ -56,7 +56,7 @@ public class TransferService {
 
         // 2) add to destination (merge if SKU already exists there)
         InventoryItem destItem = itemRepo
-                .findByWarehouseAndSku(dest, request.getSku())
+                .findByWarehouseIdAndSku(dest.getId(), request.getSku())
                 .orElseGet(() -> {
                     InventoryItem newItem = new InventoryItem();
                     newItem.setName(sourceItem.getName());

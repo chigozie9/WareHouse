@@ -115,7 +115,33 @@ button:hover {
   border-radius: 0.5rem;
   cursor: pointer;
   margin-bottom: 0.3rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
 }
+
+.warehouse-label {
+  flex: 1;
+}
+
+/* small red delete button for warehouses */
+.btn-delete-warehouse {
+  width: auto;
+  padding: 0.2rem 0.6rem;
+  font-size: 0.75rem;
+  background: linear-gradient(to right, #ef4444, #b91c1c);
+  border: none;
+  color: #f9fafb;
+  border-radius: 0.35rem;
+  cursor: pointer;
+}
+
+.btn-delete-warehouse:hover {
+  opacity: 0.9;
+}
+
+
 
 .warehouse-item:hover {
   background-color: #0b1120;

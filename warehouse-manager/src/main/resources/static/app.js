@@ -71,6 +71,7 @@ async function loadWarehouses() {
   }
 }
 
+// ---------- Render warehouse list (with delete buttons) ----------
 function renderWarehouseList() {
   warehouseListEl.innerHTML = "";
   warehouses.forEach((wh) => {
@@ -79,8 +80,26 @@ function renderWarehouseList() {
     if (selectedWarehouse && wh.id === selectedWarehouse.id) {
       li.classList.add("selected");
     }
-    li.textContent = `${wh.name} — ${wh.location} (capacity ${wh.currentCapacity}/${wh.maxCapacity})`;
-    li.addEventListener("click", () => selectWarehouse(wh.id));
+
+    // text + delete button
+    li.innerHTML = `
+      <span class="warehouse-label">
+        ${wh.name} — ${wh.location} (capacity ${wh.currentCapacity}/${wh.maxCapacity})
+      </span>
+      <button class="btn-delete-warehouse" data-id="${wh.id}">Delete</button>
+    `;
+
+    // select warehouse when clicking the label area
+    const labelSpan = li.querySelector(".warehouse-label");
+    labelSpan.addEventListener("click", () => selectWarehouse(wh.id));
+
+    // delete button (stop click from also selecting)
+    const deleteBtn = li.querySelector(".btn-delete-warehouse");
+    deleteBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      handleDeleteWarehouse(wh.id);
+    });
+
     warehouseListEl.appendChild(li);
   });
 }
@@ -221,6 +240,39 @@ async function handleDeleteItem(itemId) {
     }
 
     await loadItemsForWarehouse(selectedWarehouse.id);
+    await loadWarehouses();
+  } catch (err) {
+    showError(err.message);
+  }
+}
+
+// ---------- Delete warehouse ----------
+async function handleDeleteWarehouse(warehouseId) {
+  const confirmDelete = confirm(
+    "Delete this warehouse? This cannot be undone."
+  );
+  if (!confirmDelete) return;
+
+  try {
+    showError("");
+    const res = await fetch(`${API_BASE}/warehouses/${warehouseId}`, {
+      method: "DELETE",
+    });
+
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      throw new Error(body.error || "Failed to delete warehouse");
+    }
+
+    // If we just deleted the selected one, clear selection
+    if (selectedWarehouse && selectedWarehouse.id === warehouseId) {
+      selectedWarehouse = null;
+      items = [];
+      renderItems();
+      selectedTitleEl.textContent = "Select a warehouse";
+      warehouseMetaEl.textContent = "";
+    }
+
     await loadWarehouses();
   } catch (err) {
     showError(err.message);
