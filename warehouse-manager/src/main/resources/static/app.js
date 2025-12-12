@@ -143,6 +143,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
   if (transferSourceSelect) {
     transferSourceSelect.addEventListener("change", () => {
+      // When user manually changes the source, keep their choice
       updateTransferWarehouseOptions();
     });
   }
@@ -167,7 +168,8 @@ async function loadWarehouses() {
 
     renderWarehousesList();
     updateDashboardSummary();
-    updateTransferWarehouseOptions();
+    // Here we want source warehouse to follow the selected warehouse
+    updateTransferWarehouseOptions(true);
     await loadItemsForSelectedWarehouse();
   } catch (err) {
     console.error(err);
@@ -232,7 +234,8 @@ function renderWarehousesList() {
       selectedWarehouseId = w.id;
       renderWarehousesList();
       loadItemsForSelectedWarehouse();
-      updateTransferWarehouseOptions();
+      // When user clicks a warehouse, treat that as the source by default
+      updateTransferWarehouseOptions(true);
     });
 
     warehouseListEl.appendChild(li);
@@ -435,7 +438,7 @@ function resetItemForm() {
 }
 
 async function deleteItem(item) {
-  // *** Use nested endpoint that Spring actually exposes ***
+  // Use nested endpoint that Spring actually exposes
   const res = await fetch(
     `${API_BASE}/warehouses/${selectedWarehouseId}/items/${item.id}`,
     {
@@ -469,7 +472,7 @@ async function onItemFormSubmit() {
 
   if (editingItemId) {
     method = "PUT";
-    // *** also use nested endpoint for updates ***
+    // also use nested endpoint for updates
     url = `${API_BASE}/warehouses/${selectedWarehouseId}/items/${editingItemId}`;
   } else {
     method = "POST";
@@ -521,17 +524,32 @@ async function onTransfer() {
   updateRecentActivity();
 
   transferForm.reset();
-  updateTransferWarehouseOptions();
+  // After transfer, keep source tied to whichever warehouse is selected
+  updateTransferWarehouseOptions(true);
   await loadWarehouses();
 }
 
-function updateTransferWarehouseOptions() {
+/**
+ * Update the transfer dropdowns.
+ * @param {boolean} preferSelectedWarehouse
+ *   If true, we prefer using selectedWarehouseId as the source.
+ */
+function updateTransferWarehouseOptions(preferSelectedWarehouse = false) {
   if (!transferSourceSelect || !transferDestinationSelect) return;
 
-  // Determine current source selection
-  let currentSourceId = transferSourceSelect.value
-    ? Number(transferSourceSelect.value)
-    : selectedWarehouseId || null;
+  // Decide what the source *should* be
+  let currentSourceId = null;
+
+  if (preferSelectedWarehouse && selectedWarehouseId) {
+    // Called after warehouse click / initial load: follow left-panel selection
+    currentSourceId = selectedWarehouseId;
+  } else if (transferSourceSelect.value) {
+    // Keep user's manual choice
+    currentSourceId = Number(transferSourceSelect.value);
+  } else if (selectedWarehouseId) {
+    // Fallback to selected warehouse if dropdown is empty
+    currentSourceId = selectedWarehouseId;
+  }
 
   // Rebuild source options
   transferSourceSelect.innerHTML = "";
@@ -562,7 +580,7 @@ function updateTransferWarehouseOptions() {
     : null;
 
   warehouses.forEach((w) => {
-    if (sourceId && w.id === sourceId) return;
+    if (sourceId && w.id === sourceId) return; // don't include source as destination
     const opt = document.createElement("option");
     opt.value = w.id;
     opt.textContent = `${w.name} (${w.location})`;
