@@ -1,0 +1,98 @@
+name: Tests
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: warehouse_db
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # ---------- Backend ----------
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: maven
+
+      - name: Build backend and run unit tests
+        working-directory: warehouse-manager
+        run: mvn -B package
+
+      - name: Start backend (against real PostgreSQL)
+        working-directory: warehouse-manager
+        run: |
+          nohup java -jar target/warehouse-manager-0.0.1-SNAPSHOT.jar > backend.log 2>&1 &
+          for i in $(seq 1 60); do curl -sf http://localhost:8080/api/test && exit 0; sleep 2; done
+          cat backend.log; exit 1
+
+      # ---------- Frontend ----------
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: warehouse-frontend/package-lock.json
+
+      - name: Start frontend
+        working-directory: warehouse-frontend
+        run: |
+          npm ci
+          nohup npx vite --port 5173 --strictPort > frontend.log 2>&1 &
+          for i in $(seq 1 30); do curl -sf http://localhost:5173 > /dev/null && exit 0; sleep 1; done
+          cat frontend.log; exit 1
+
+      # ---------- Test suite ----------
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: warehouse-tests/requirements.txt
+
+      - name: Install test dependencies
+        working-directory: warehouse-tests
+        run: |
+          pip install -r requirements.txt
+          python -m playwright install --with-deps chromium
+
+      - name: Run API + UI tests
+        working-directory: warehouse-tests
+        run: >
+          pytest
+          --html=report/index.html --self-contained-html
+          --junitxml=report/junit.xml
+          --tracing=retain-on-failure --output=report/traces
+
+      - name: Upload test report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-report
+          path: warehouse-tests/report/
+
+      - name: Upload server logs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: server-logs
+          path: |
+            warehouse-manager/backend.log
+            warehouse-frontend/frontend.log

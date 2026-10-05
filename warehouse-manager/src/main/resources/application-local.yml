@@ -1,0 +1,11 @@
+# Run with:  mvn spring-boot:run -Dspring-boot.run.profiles=local
+# Uses an in-memory H2 database (wiped on every restart) instead of PostgreSQL.
+spring:
+  datasource:
+    url: jdbc:h2:mem:warehouse_db;MODE=PostgreSQL;DB_CLOSE_DELAY=-1
+    username: sa
+    password:
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: false

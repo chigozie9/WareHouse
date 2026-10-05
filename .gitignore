@@ -1,0 +1,7 @@
+.venv/
+__pycache__/
+.pytest_cache/
+warehouse-tests/report/
+warehouse-tests/test-results/
+node_modules/
+*.log
