@@ -139,8 +139,6 @@ def test_delete_blocked_when_warehouse_has_items(page: Page, make_warehouse, add
 
 
 @pytest.mark.bug
-@pytest.mark.xfail(reason="BUG-2: duplicate names surface as 'Unexpected server error' "
-                          "instead of telling the user the name is taken")
 def test_duplicate_name_shows_helpful_error(page: Page, make_warehouse):
     existing = make_warehouse()
     page.goto(f"{UI_URL}/warehouses")

@@ -32,7 +32,7 @@ def test_adding_existing_sku_merges_quantity(api, make_warehouse, add_item):
 @pytest.mark.parametrize("quantity", [
     0,
     # -5 trips the @Min(0) annotation before the service check runs
-    pytest.param(-5, marks=[pytest.mark.bug, pytest.mark.xfail(reason="BUG-1: validation error returns 500")]),
+    pytest.param(-5, marks=pytest.mark.bug),
 ])
 def test_rejects_non_positive_quantity(api, make_warehouse, quantity):
     wh = make_warehouse()
@@ -100,8 +100,6 @@ def test_delete_item_frees_capacity(api, make_warehouse, add_item):
 
 
 @pytest.mark.bug
-@pytest.mark.xfail(reason="BUG-4: updating an item's SKU to one already in the warehouse "
-                          "is allowed, leaving two items with the same SKU")
 def test_update_cannot_create_duplicate_sku(api, make_warehouse, add_item):
     wh = make_warehouse()
     add_item(wh["id"], quantity=5, sku="DUP-A")
@@ -109,18 +107,26 @@ def test_update_cannot_create_duplicate_sku(api, make_warehouse, add_item):
 
     resp = api.put(f"/warehouses/{wh['id']}/items/{item_b['id']}", json={**item_b, "sku": "DUP-A"})
 
-    assert resp.status_code in (400, 409)
+    assert resp.status_code == 409
+    assert resp.json()["error"] == "Another item in this warehouse already uses SKU DUP-A."
+    skus = sorted(i["sku"] for i in api.get(f"/warehouses/{wh['id']}/items").json())
+    assert skus == ["DUP-A", "DUP-B"]  # nothing changed
+
+
+def test_same_sku_is_allowed_in_different_warehouses(api, make_warehouse, add_item):
+    wh_a, wh_b = make_warehouse(), make_warehouse()
+    add_item(wh_a["id"], quantity=1, sku="SHARED")
+    item_b = add_item(wh_b["id"], quantity=1, sku="OTHER")
+    resp = api.put(f"/warehouses/{wh_b['id']}/items/{item_b['id']}", json={**item_b, "sku": "SHARED"})
+    assert resp.status_code == 200
 
 
 @pytest.mark.bug
-@pytest.mark.xfail(reason="BUG-5: listing items for a warehouse that does not exist "
-                          "returns 200 [] instead of 404")
 def test_list_items_for_unknown_warehouse_returns_404(api):
     assert api.get("/warehouses/987654/items").status_code == 404
 
 
 @pytest.mark.bug
-@pytest.mark.xfail(reason="BUG-6: updateItem never copies expirationDate, so changes are silently dropped")
 def test_update_changes_expiration_date(api, make_warehouse, add_item):
     wh = make_warehouse()
     item = add_item(wh["id"], quantity=1, expirationDate="2026-12-01")

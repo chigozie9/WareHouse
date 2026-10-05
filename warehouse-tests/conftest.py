@@ -69,7 +69,10 @@ def make_warehouse(api):
     yield _make
 
     for wh_id in created:
-        for item in api.get(f"/warehouses/{wh_id}/items").json() or []:
+        resp = api.get(f"/warehouses/{wh_id}/items")
+        if resp.status_code != 200:  # warehouse already deleted by the test
+            continue
+        for item in resp.json():
             api.delete(f"/warehouses/{wh_id}/items/{item['id']}")
         api.delete(f"/warehouses/{wh_id}")
 

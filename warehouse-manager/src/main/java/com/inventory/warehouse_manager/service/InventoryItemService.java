@@ -1,5 +1,6 @@
 package com.inventory.warehouse_manager.service;
 
+import com.inventory.warehouse_manager.exception.ConflictException;
 import com.inventory.warehouse_manager.exception.ResourceNotFoundException;
 import com.inventory.warehouse_manager.model.entity.InventoryItem;
 import com.inventory.warehouse_manager.model.entity.Warehouse;
@@ -26,6 +27,11 @@ public class InventoryItemService {
     // Read
     // ---------------------------------------------------------------------
     public List<InventoryItem> getItems(Long warehouseId) {
+        // BUG-5 fix: an unknown warehouse used to return 200 [] (looked like an
+        // empty warehouse). Return 404 like every other warehouse endpoint.
+        if (!warehouseRepo.existsById(warehouseId)) {
+            throw new ResourceNotFoundException("Warehouse not found with id " + warehouseId);
+        }
         return itemRepo.findByWarehouseId(warehouseId);
     }
 
@@ -92,6 +98,14 @@ public class InventoryItemService {
                     "Item does not belong to warehouse " + warehouseId);
         }
 
+        // BUG-4 fix: SKUs must stay unique within a warehouse. Without this check an
+        // update could create two items with the same SKU, and transfers (which look
+        // items up by SKU) would then crash with a 500.
+        if (itemRepo.existsByWarehouseIdAndSkuAndIdNot(warehouseId, updated.getSku(), itemId)) {
+            throw new ConflictException(
+                    "Another item in this warehouse already uses SKU " + updated.getSku() + ".");
+        }
+
         int oldQty = item.getQuantity() != null ? item.getQuantity() : 0;
         int newQty = updated.getQuantity() != null ? updated.getQuantity() : 0;
 
@@ -114,6 +128,8 @@ public class InventoryItemService {
         item.setDescription(updated.getDescription());
         item.setCategory(updated.getCategory());
         item.setStorageLocation(updated.getStorageLocation());
+        // BUG-6 fix: expirationDate was never copied, so edits were silently dropped
+        item.setExpirationDate(updated.getExpirationDate());
         item.setQuantity(newQty);
 
         // Adjust warehouse capacity

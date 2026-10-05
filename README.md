@@ -37,23 +37,28 @@ warehouses, with a dashboard showing how full each warehouse is, plus an automat
 **Design choices**
 
 - Each test creates its own uniquely named data through fixtures and cleans it up, so tests are independent and can run in any order against a shared database.
-- Known bugs are written as tests of the *correct* behavior and marked `xfail` with `xfail_strict = true`. The suite stays green today, and the moment a bug is fixed the run fails as a reminder to remove the marker.
+- Bugs were written as tests of the *correct* behavior and marked `xfail` with `xfail_strict = true`, so the suite stayed green while documenting them, and the moment a bug was fixed the run failed as a reminder to remove the marker. Tests for fixed bugs keep the `bug` marker (`pytest -m bug`) as regression tests.
 - CI runs the backend against a **real PostgreSQL** container. Locally, a `local` Spring profile swaps in an in-memory H2 database, so nothing has to be installed.
 
-## Bugs found by the suite
+## Bugs found by the suite (all fixed)
 
-| ID | Bug | Expected | Actual |
+The suite was first written against the original backend, where these tests
+were marked `xfail`. After the fixes, `xfail_strict` flagged every one of them
+as unexpectedly passing, and they now run as regular regression tests.
+
+| ID | Bug | Before | Fix |
 |---|---|---|---|
-| BUG-1 | Bean-validation failures (missing name, negative capacity/quantity, transfer quantity 0, missing SKU) | 400 with the field error | **500** "Unexpected server error" |
-| BUG-2 | Creating a warehouse with a name that already exists | 409 "name already exists" | **500**, and the UI shows "Unexpected server error" |
-| BUG-3 | Malformed JSON body | 400 | **500** |
-| BUG-4 | Updating an item's SKU to one already in the same warehouse | Rejected | **Allowed**, leaving duplicate SKUs; later transfers of that SKU then crash with 500 |
-| BUG-5 | `GET /warehouses/{id}/items` for a warehouse that doesn't exist | 404 | 200 `[]` |
-| BUG-6 | Updating an item's `expirationDate` | Saved | **Silently ignored** (`updateItem` never copies the field) |
+| BUG-1 | Bean-validation failures (missing name, negative capacity/quantity, transfer quantity 0, missing SKU) | **500** "Unexpected server error" | 400 listing each bad field, e.g. `maxCapacity: must be greater than or equal to 0` |
+| BUG-2 | Creating or renaming a warehouse to a name that already exists | **500**, and the UI showed "Unexpected server error" | 409 `A warehouse named "X" already exists.`, plus a 409 safety net for DB constraint violations |
+| BUG-3 | Malformed JSON or wrong types in the body | **500** | 400 `Request body is missing or is not valid JSON.` |
+| BUG-4 | Updating an item's SKU to one already used in the same warehouse | **Allowed**, leaving duplicate SKUs; later transfers of that SKU crashed with 500 | 409, and nothing is changed |
+| BUG-5 | `GET /warehouses/{id}/items` for a warehouse that doesn't exist | 200 `[]` | 404 |
+| BUG-6 | Updating an item's `expirationDate` | **Silently ignored** | Saved |
 
-Root cause for BUG-1 to BUG-3: `GlobalExceptionHandler` has no handlers for
+Root cause for BUG-1 to BUG-3: `GlobalExceptionHandler` had no handlers for
 `MethodArgumentNotValidException`, `HttpMessageNotReadableException` or
-`DataIntegrityViolationException`, so they all fall through to the generic 500 handler.
+`DataIntegrityViolationException`, so they all fell through to the generic 500
+handler. Each fix is commented with its bug ID in the code.
 
 ## Running it locally
 

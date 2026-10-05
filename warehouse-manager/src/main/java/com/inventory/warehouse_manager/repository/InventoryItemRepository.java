@@ -16,4 +16,7 @@ public interface InventoryItemRepository extends JpaRepository<InventoryItem, Lo
 
     // Check if a warehouse still has any items (used before deleting warehouse)
     boolean existsByWarehouseId(Long warehouseId);
+
+    // BUG-4 fix: is this SKU already used by a *different* item in the same warehouse?
+    boolean existsByWarehouseIdAndSkuAndIdNot(Long warehouseId, String sku, Long id);
 }
